@@ -1,0 +1,1 @@
+roslaunch interbotix_xsarm_perception xsarm_perception.launch robot_model:=wx250 use_rviz:=false

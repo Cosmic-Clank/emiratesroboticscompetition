@@ -1,0 +1,1 @@
+rosservice call /wx200/torque_enable "{cmd_type: 'group', name: 'arm', enable: false}"

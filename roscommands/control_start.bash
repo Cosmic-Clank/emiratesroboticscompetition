@@ -1,0 +1,1 @@
+roslaunch interbotix_xsarm_control xsarm_control.launch robot_model:=wx250
