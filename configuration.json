@@ -1,0 +1,30 @@
+{
+    "plastic": {
+        "name": "Plastic",
+        "color": "#FF0000",
+        "x": 0.3,
+        "y": 0,
+        "z": 0.2
+    },
+    "metal": {
+        "name": "Metal",
+        "color": "#00FF00",
+        "x": 0.3,
+        "y": 0,
+        "z": 0.2
+    },
+    "glass": {
+        "name": "Glass",
+        "color": "#0000FF",
+        "x": 0.3,
+        "y": 0,
+        "z": 0.2
+    },
+    "paper": {
+        "name": "Paper",
+        "color": "#FFFF00",
+        "x": 0.3,
+        "y": 0,
+        "z": 0.2
+    }
+}

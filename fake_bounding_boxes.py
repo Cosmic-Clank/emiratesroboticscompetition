@@ -5,10 +5,12 @@ import modules.realsense as rs
 
 # Create an empty dictionary to store bounding box information
 bounding_boxes = []
+labels = ["metal", "plastic", "paper"]
+index = 0
 
 # Callback function for mouse events
 def draw_rectangle(event, x, y, flags, param):
-    global drawing, top_left_pt, bottom_right_pt
+    global drawing, top_left_pt, bottom_right_pt, index
 
     if event == cv2.EVENT_LBUTTONDOWN:
         drawing = True
@@ -21,7 +23,8 @@ def draw_rectangle(event, x, y, flags, param):
         # Store bounding box information in the dictionary
         
         key = len(bounding_boxes) + 1
-        bounding_boxes.append(od._BoundingBox(top_left_pt[0], top_left_pt[1], bottom_right_pt[0], bottom_right_pt[1], 1, "TRASH", 0))
+        bounding_boxes.append(od._BoundingBox(top_left_pt[0], top_left_pt[1], bottom_right_pt[0], bottom_right_pt[1], 0.8, labels[index%len(labels)], 0))
+        index += 1
 
         # Draw the bounding box on the image
         cv2.rectangle(img_copy, top_left_pt, bottom_right_pt, (0, 255, 0), 2)

@@ -36,8 +36,9 @@ class ObjectDetection:
                     distance = 0
                 
                 self.bounding_boxes.append(_BoundingBox(x1, y1, x2, y2, confidence, self.labels[class_name], distance))
-        
-        # self.bounding_boxes = pickle.load(open("bounding_boxes.pkl", "rb"))
+                
+        with open("bounding_boxes.pkl", "rb") as f:
+            self.bounding_boxes = pickle.load(f)
         
     def get_bounding_boxes(self):
         return self.bounding_boxes

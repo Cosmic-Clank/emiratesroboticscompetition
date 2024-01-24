@@ -10,7 +10,6 @@ while True:
 
     at_detector.detect(color_image)
     drawn_image = at_detector.get_drawn_image(color_image)
-    at_detector.get_results()[0].gripper_point
     
     cv2.imshow('RealSense', drawn_image)
 
