@@ -1,4 +1,12 @@
 {
+    "april_tag_scan":
+    {
+        "name": "April Tag Scan",
+        "color": "#FF0000",
+        "x": 0.3,
+        "y": 0,
+        "z": 0.2
+    },
     "plastic": {
         "name": "Plastic",
         "color": "#FF0000",
