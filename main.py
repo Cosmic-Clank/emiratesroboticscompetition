@@ -25,14 +25,15 @@ def main():
     armtag = InterbotixArmTagInterface()
 
     # set initial arm and gripper pose
-    bot.arm.set_ee_pose_components(x=configuration["april_tag_scan"]["x"], z=configuration["april_tag_scan"]["z"])
+    # bot.arm.set_ee_pose_components(x=configuration["april_tag_scan"]["x"], z=configuration["april_tag_scan"]["z"])
+    bot.arm.go_to_sleep_pose()
     bot.gripper.open()
 
     # get the ArmTag pose
     bot.arm.set_ee_pose_components(y=-0.3, z=0.2)
     time.sleep(0.5)
     armtag.find_ref_to_arm_base_transform()
-    bot.arm.set_ee_pose_components(x=0.3, z=0.2)
+    bot.arm.set_ee_pose_components(x=configuration["april_tag_scan"]["x"], y=configuration["april_tag_scan"]["y"], z=configuration["april_tag_scan"]["z"])
 
     # get the cluster positions
     # sort them from max to min 'x' position w.r.t. the 'wx250/base_link' frame
