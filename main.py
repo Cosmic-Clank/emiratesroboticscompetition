@@ -42,10 +42,13 @@ def main():
     # pick up all the objects and drop them in a virtual basket in front of the robot
     for index, cluster in enumerate(clusters):
         x, y, z = cluster["position"]
-        bot.arm.set_ee_pose_components(x=x, y=y, z=z+0.05, pitch=0.5)
-        bot.arm.set_ee_pose_components(x=x, y=y, z=z, pitch=0.5)
+        bot.arm.set_ee_pose_components(x=x, y=y, z=z+0.05)
+        bot.arm.set_ee_pose_components(x=x, y=y, z=z)
         bot.gripper.close()
-        bot.arm.set_ee_pose_components(x=x, y=y, z=z+0.05, pitch=0.5)
+        bot.arm.set_ee_pose_components(x=x, y=y, z=z+0.05)
+        bot.arm.set_ee_pose_components(x=0, y=0, z=0.2)
+        
+        bot.arm.set_single_joint_position("waist", -np.pi/2.0)
         
         if "metal" in object_labels[index].lower():
             bot.arm.set_ee_pose_components(x=configuration["metal"]["x"], y=configuration["metal"]["y"], z=configuration["metal"]["z"])
@@ -60,7 +63,8 @@ def main():
             bot.arm.set_ee_pose_components(x=configuration["glass"]["x"], y=configuration["glass"]["y"], z=configuration["glass"]["z"])
             
         bot.gripper.open()
-        bot.arm.set_ee_pose_components(x=0.3, z=0.2)
+        bot.arm.set_ee_pose_components(x=0, y=0, z=0.2)
+
     bot.arm.go_to_sleep_pose()
 
 if __name__=='__main__':
