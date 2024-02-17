@@ -2,6 +2,7 @@ from interbotix_xs_modules.arm import InterbotixManipulatorXS
 from interbotix_perception_modules.armtag import InterbotixArmTagInterface
 from interbotix_perception_modules.pointcloud import InterbotixPointCloudInterface
 import modules.object_detection as od
+import modules.ros_image_listener as rir
 import numpy as np
 import cv2
 import time
@@ -9,11 +10,7 @@ import json
     
 def main():
     object_detector = od.ObjectDetection()
-    
-    # object_detector.infer_image(image)
-    
-    object_labels = object_detector.get_labels(reverse=False)
-    print("object_labels: ", object_labels)
+    image_reader = rir.ROSImageReader("/camera/color/image_raw")
         
     with open("configuration.json", "r") as f:
         configuration = json.load(f)
@@ -40,7 +37,7 @@ def main():
     success, clusters = pcl.get_cluster_positions(ref_frame="wx250/base_link", sort_axis="x", reverse=True)
 
     # pick up all the objects and drop them in a virtual basket in front of the robot
-    for index, cluster in enumerate(clusters):
+    for cluster in clusters:
         x, y, z = cluster["position"]
         bot.arm.set_ee_pose_components(x=x, y=y, z=z+0.05)
         bot.arm.set_ee_pose_components(x=x, y=y, z=z)
@@ -48,15 +45,20 @@ def main():
         bot.arm.set_ee_pose_components(x=x, y=y, z=z+0.05)
         bot.arm.set_ee_pose_components(x=0, y=0, z=0.2)
         
+        bot.arm.set_ee_pose_components(x=configuration["april_tag_scan"]["x"], y=configuration["april_tag_scan"]["y"], z=configuration["april_tag_scan"]["z"])
+        
+        material = object_detector.infer_image_from_cv2(image_reader.get_latest_image())
+        print("Material Identified: ", material)
+        
         bot.arm.set_single_joint_position("waist", -np.pi/2.0)
         
-        if "metal" in object_labels[index].lower():
+        if "metal" in material:
             bot.arm.set_ee_pose_components(x=configuration["metal"]["x"], y=configuration["metal"]["y"], z=configuration["metal"]["z"])
             
-        elif "plastic" in object_labels[index].lower():
+        elif "plastic" in material:
             bot.arm.set_ee_pose_components(x=configuration["plastic"]["x"], y=configuration["plastic"]["y"], z=configuration["plastic"]["z"])
             
-        elif "paper" in object_labels[index].lower():
+        elif "paper" in material:
             bot.arm.set_ee_pose_components(x=configuration["paper"]["x"], y=configuration["paper"]["y"], z=configuration["paper"]["z"])
             
         else:

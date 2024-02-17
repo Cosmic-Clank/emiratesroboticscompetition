@@ -1,87 +1,56 @@
-from ultralytics import YOLO
-import pickle
+from openai import OpenAI
+import base64
 import cv2
-import math
-
 
 class ObjectDetection:
-    def __init__(self, path_to_model="yolo-Weights/yolov8x.pt", labels=["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "sofa", "pottedplant", "bed", "diningtable", "toilet", "tvmonitor", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]):
-        self.model = YOLO(path_to_model)
-        self.labels = labels
-        self.current_frame = None
-        self.bounding_boxes = []
+    def __init__(self):
+        self.API_KEY = "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"
+        self.client = OpenAI(api_key=self.API_KEY)
 
-    def infer_image(self, np_image, depth_frame=None):
-        results = self.model.predict(np_image, verbose=False, stream=True)
-        self.current_frame = np_image
-        self.bounding_boxes.clear()
+    def encode_image(self, image_path):
+        with open(image_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode('utf-8')
 
-        for r in results:
-            boxes = r.boxes
-            for box in boxes:
-                # bounding box
-                x1, y1, x2, y2 = box.xyxy[0]
-                x1, y1, x2, y2 = int(x1), int(y1), int(
-                    x2), int(y2)  # convert to int values
+    def infer_image(self, image_path):
+        base64_image = self.encode_image(image_path)
 
-                # confidence
-                confidence = math.ceil((box.conf[0]*100))/100
+        response = self.client.chat.completions.create(
+            model="gpt-4-vision-preview",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Determine the material of the object in focus either as metal, plastic, paper or glass. Give a one word answer."},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpg;base64,{base64_image}",
+                            },
+                        },
+                    ],
+                }
+            ],
+            max_tokens=300,
+        )
 
-                # class name
-                class_name = int(box.cls[0])
+        return response.choices[0].message.content.strip().lower()
 
-                center = (int(x1 + (x2-x1)/2), int(y1 + (y2-y1)/2))
-
-                if depth_frame:
-                    distance = depth_frame.get_distance(center[0], center[1])
-                else:
-                    distance = 0
-
-                self.bounding_boxes.append(_BoundingBox(
-                    x1, y1, x2, y2, confidence, self.labels[class_name], distance))
-
-    def get_bounding_boxes(self):
-        return self.bounding_boxes
-
-    def get_labels(self, reverse=False):
-        # bounding_boxes = sorted(self.bounding_boxes, key=lambda bounding_box: bounding_box.center[0], reverse=reverse)
-        # labels = [bounding_box.class_name for bounding_box in bounding_boxes]
-        labels = ["metal", "plastic", "paper", "glass"]
-        return labels
-
-    def get_infered_image(self, font=cv2.FONT_HERSHEY_SIMPLEX, font_scale=0.6, color=(255, 0, 0), font_thickness=2):
-        infered_image = self.current_frame.copy()
-
-        for bounding_box in self.bounding_boxes:
-            cv2.rectangle(infered_image, (bounding_box.x1, bounding_box.y1),
-                          (bounding_box.x2, bounding_box.y2), (255, 255, 255), 3)
-            cv2.circle(infered_image, bounding_box.center, 5, (0, 0, 255), -1)
-            cv2.rectangle(infered_image, (bounding_box.x1, bounding_box.y1 - 20),
-                          (bounding_box.x2, bounding_box.y1), (255, 0, 255), -1)
-            cv2.putText(infered_image, f"{bounding_box.class_name.upper()} CONF: {bounding_box.confidence} CORDS: {bounding_box.center} DIST: {bounding_box.distance:.2f}m", (
-                bounding_box.x1, bounding_box.y1 - 5), font, font_scale, color, font_thickness)
-
-        return infered_image
+    def infer_image_from_cv2(self, image):
+        cv2.imwrite("object.jpg", image)
+        return self.infer_image("object.jpg")
     
-    def _check_detected(self):
-        return self.current_frame is not None
+if __name__ == "__main__":
+    object_detector = ObjectDetection()
+    
+    # Capture image from camera
+    camera = cv2.VideoCapture(0)
+    ret, frame = camera.read()
 
+    # Run inference on captured image
+    camera.release()
 
-class _BoundingBox:
-    def __init__(self, x1, y1, x2, y2, confidence, class_name, distance):
-        self.x1 = x1
-        self.y1 = y1
-        self.x2 = x2
-        self.y2 = y2
+    material = object_detector.infer_image_from_cv2(frame)
+    # Release camera
 
-        self.width = x2 - x1
-        self.height = y2 - y1
-
-        self.confidence = confidence
-        self.class_name = class_name
-        self.center = self.find_center()
-
-        self.distance = distance
-
-    def find_center(self):
-        return (int(self.x1 + (self.x2-self.x1)/2), int(self.y1 + (self.y2-self.y1)/2))
+    # Print the result
+    print(material)
