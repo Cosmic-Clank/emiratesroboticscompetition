@@ -7,6 +7,7 @@ import numpy as np
 import cv2
 import time
 import json
+import math
     
 def main():
     object_detector = od.ObjectDetection()
@@ -39,10 +40,13 @@ def main():
     # pick up all the objects and drop them in a virtual basket in front of the robot
     for cluster in clusters:
         x, y, z = cluster["position"]
-        bot.arm.set_ee_pose_components(x=x, y=y, z=z+0.05)
-        bot.arm.set_ee_pose_components(x=x, y=y, z=z)
+        
+        offset_x = -(x / (math.sqrt(x**2 + y**2))) * 0.05
+        offset_y = -(y / (math.sqrt(x**2 + y**2))) * 0.05
+        
+        bot.arm.set_ee_pose_components(x=x+offset_x, y=y+offset_y, z=z+0.1)
+        bot.arm.set_ee_pose_components(x=x+offset_x, y=y+offset_y, z=z-0.05)
         bot.gripper.close()
-        bot.arm.set_ee_pose_components(x=x, y=y, z=z+0.05)
         bot.arm.set_ee_pose_components(x=0, y=0, z=0.2)
         
         bot.arm.set_ee_pose_components(x=configuration["april_tag_scan"]["x"], y=configuration["april_tag_scan"]["y"], z=configuration["april_tag_scan"]["z"])
@@ -50,7 +54,9 @@ def main():
         material = object_detector.infer_image_from_cv2(image_reader.get_latest_image())
         print("Material Identified: ", material)
         
-        bot.arm.set_single_joint_position("waist", -np.pi/2.0)
+        bot.arm.set_ee_pose_components(x=0.02, y=0.3, z=0.2)
+        
+        bot.arm.set_single_joint_position("waist", np.pi/2.0)
         
         if "metal" in material:
             bot.arm.set_ee_pose_components(x=configuration["metal"]["x"], y=configuration["metal"]["y"], z=configuration["metal"]["z"])

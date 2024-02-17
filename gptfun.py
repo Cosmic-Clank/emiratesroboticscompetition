@@ -20,7 +20,7 @@ class ObjectDetection:
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": "Determine the material of the object in focus either as one of the following four materials: metal, plastic, paper or glass. If u are not able to identify the material, still give the material as one of those four materials as best as you can. Give a two word answer that is the material followed by what the object is. Do not say anything else."},
+                        {"type": "text", "text": "describe the image you see in a pretty way"},
                         {
                             "type": "image_url",
                             "image_url": {
@@ -33,7 +33,18 @@ class ObjectDetection:
             max_tokens=300,
         )
 
-        return response.choices[0].message.content.strip().lower()
+        answer = response.choices[0].message.content.strip().lower()
+        print(answer)
+
+        response = self.client.images.generate(
+        model="dall-e-3",
+        prompt=answer,
+        size="1024x1024",
+        quality="standard",
+        n=1,
+        )
+
+        print(response.data[0].url)
 
     def infer_image_from_cv2(self, image):
         cv2.imwrite("object.jpg", image)
@@ -49,8 +60,4 @@ if __name__ == "__main__":
     # Run inference on captured image
     camera.release()
 
-    material = object_detector.infer_image_from_cv2(frame)
-    # Release camera
-
-    # Print the result
-    print(material)
+    object_detector.infer_image_from_cv2(frame)
